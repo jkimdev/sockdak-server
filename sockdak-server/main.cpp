@@ -32,4 +32,23 @@ int main(int argc, const char * argv[]) {
     retval = bind(listen_sock, (const struct sockaddr *)&serveraddr, sizeof(serveraddr));
     if(retval == -1) err_quit("bind()");
     
+    // listen
+    retval = listen(listen_sock, SOMAXCONN);
+    if (retval == -1) err_quit("listen()");
+    
+    // variables
+    int client_sock = 0;
+    struct sockaddr_in clientAddr;
+    socklen_t addrlen;
+    char buf[BUFSIZE + 1];
+    
+    while (1) {
+        // aceept
+        addrlen = sizeof(clientAddr);
+        client_sock = accept(client_sock, (struct sockaddr *)&clientAddr, &addrlen);
+        if (client_sock == -1) {
+            err_display("accept()");
+            break;
+        }
+    }
 }
