@@ -25,6 +25,7 @@
 /* Begin PBXFileReference section */
 		BF24203E2AEC9981005444B1 /* sockdak-server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "sockdak-server"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF2420412AEC9981005444B1 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		BFCC58C82AF4D2A80020DDE0 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				BF2420412AEC9981005444B1 /* main.cpp */,
+				BFCC58C82AF4D2A80020DDE0 /* Common.h */,
 			);
 			path = "sockdak-server";
 			sourceTree = "<group>";
