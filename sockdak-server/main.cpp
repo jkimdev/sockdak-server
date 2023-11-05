@@ -51,4 +51,33 @@ int main(int argc, const char * argv[]) {
             break;
         }
     }
+    
+    // client info
+    char addr[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &clientAddr.sin_addr, addr, sizeof(addr));
+    printf("\n[TCP Server] Client IP: %s, Port: %hu\n", addr, ntohs(clientAddr.sin_port));
+    
+    // Communication with Client
+    while (1) {
+        // receive
+        retval = recv(client_sock, buf, BUFSIZE, 0);
+        if (retval == -1) {
+            err_display("recv()");
+            break;
+        }
+        else if (retval == 0)
+            break;
+        // print received data
+        buf[retval] = '\0';
+        printf("[TCP/%s:%d] %s\n", addr, ntohs(clientAddr.sin_port), buf);
+        
+        // send data
+        retval = send(client_sock, buf, retval, 0);
+        if (retval == -1) {
+            err_display("send()");
+            break;
+        }
+    }
+    
+    close(client_sock);
 }
