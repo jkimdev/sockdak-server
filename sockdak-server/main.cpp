@@ -29,7 +29,7 @@ int main(int argc, const char * argv[]) {
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port = htons(SERVERPORT);
-    retval = bind(listen_sock, (const struct sockaddr *)&serveraddr, sizeof(serveraddr));
+    retval = bind(listen_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
     if(retval == -1) err_quit("bind()");
     
     // listen
@@ -45,39 +45,44 @@ int main(int argc, const char * argv[]) {
     while (1) {
         // aceept
         addrlen = sizeof(clientAddr);
-        client_sock = accept(client_sock, (struct sockaddr *)&clientAddr, &addrlen);
+        client_sock = accept(listen_sock, (struct sockaddr *)&clientAddr, &addrlen);
         if (client_sock == -1) {
             err_display("accept()");
             break;
         }
-    }
-    
-    // client info
-    char addr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &clientAddr.sin_addr, addr, sizeof(addr));
-    printf("\n[TCP Server] Client IP: %s, Port: %hu\n", addr, ntohs(clientAddr.sin_port));
-    
-    // Communication with Client
-    while (1) {
-        // receive
-        retval = recv(client_sock, buf, BUFSIZE, 0);
-        if (retval == -1) {
-            err_display("recv()");
-            break;
-        }
-        else if (retval == 0)
-            break;
-        // print received data
-        buf[retval] = '\0';
-        printf("[TCP/%s:%d] %s\n", addr, ntohs(clientAddr.sin_port), buf);
         
-        // send data
-        retval = send(client_sock, buf, retval, 0);
-        if (retval == -1) {
-            err_display("send()");
-            break;
+        // client info
+        char addr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &clientAddr.sin_addr, addr, sizeof(addr));
+        printf("\n[TCP Server] Client IP: %s, Port: %hu\n", addr, ntohs(clientAddr.sin_port));
+        
+        // Communication with Client
+        while (1) {
+            // receive
+            retval = recv(client_sock, buf, BUFSIZE, 0);
+            if (retval == -1) {
+                err_display("recv()");
+                break;
+            }
+            else if (retval == 0)
+                break;
+            // print received data
+            buf[retval] = '\0';
+            printf("[TCP/%s:%d] %s\n", addr, ntohs(clientAddr.sin_port), buf);
+            
+            // send data
+            retval = send(client_sock, buf, retval, 0);
+            if (retval == -1) {
+                err_display("send()");
+                break;
+            }
         }
+        close(client_sock);
+        printf("[TCP Server] IP: %s:%d\n", addr, ntohl(clientAddr.sin_port));
     }
+    
+
     
     close(client_sock);
+    return 0;
 }
