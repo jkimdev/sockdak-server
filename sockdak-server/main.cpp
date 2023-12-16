@@ -5,99 +5,55 @@
 //  Created by Jimmy on 2023/10/28.
 //
 
+#include <boost/asio.hpp>
 #include <iostream>
-#include "Common.h"
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 
-#define SERVERPORT 9000
-#define BUFSIZE 512
+using namespace std;
+using namespace boost::asio;
+using namespace boost::asio::ip;
 
-void *ProcessClient(void *arg) {
-    int client_sock = (int)(long long)arg;
-    int retval;
-    struct sockaddr_in clientaddr;
-    char addr[INET_ADDRSTRLEN];
-    socklen_t addrlen;
-    char buf[BUFSIZE + 1];
-    
-    // client info
-    addrlen = sizeof(clientaddr);
-    getpeername(client_sock, (struct sockaddr*)&clientaddr, &addrlen);
-    inet_ntop(AF_INET, &clientaddr.sin_addr, addr, sizeof(addr));
-    
-    // Communication with Client
-    while (1) {
-        // receive
-        retval = recv(client_sock, buf, BUFSIZE, MSG_WAITALL);
-        if (retval == -1) {
-            err_display("recv()");
-            break;
-        }
-        else if (retval == 0)
-            break;
-        // print received data
-        buf[retval] = '\0';
-        printf("[TCP/%s:%d] %s\n", addr, ntohs(clientaddr.sin_port), buf);
-        
-        // send data
-        retval = send(client_sock, buf, retval, 0);
-        if (retval == -1) {
-            err_display("send()");
-            break;
-        }
-    }
-    close(client_sock);
-    printf("[TCP Server] IP: %s:%d\n", addr, ntohl(clientaddr.sin_port));
-    return 0;
+string getData(tcp::socket& socket) {
+    boost::asio::streambuf buf;
+    read_until(socket, buf, "\n");
+    string data = buffer_cast<const char*>(buf.data());
+    return data;
 }
 
+void sendData(tcp::socket& socket, const string& message) {
+    write(socket, buffer(message + "\n"));
+}
 
-int main(int argc, const char * argv[]) {
-    int retval;
+int main(int argc, char* argv[]) {
+    io_service io_service;
     
-    int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (listen_sock == -1) err_quit("socket()");
+    tcp::acceptor acceptor_server(io_service, tcp::endpoint(tcp::v4(), 9999));
     
-    // bind()
-    struct sockaddr_in serveraddr;
-    memset(&serveraddr, 0, sizeof(serveraddr));
-    serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serveraddr.sin_port = htons(SERVERPORT);
-    retval = bind(listen_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
-    if(retval == -1) err_quit("bind()");
+    tcp::socket server_socket(io_service);
     
-    // listen
-    retval = listen(listen_sock, SOMAXCONN);
-    if (retval == -1) err_quit("listen()");
+    acceptor_server.accept(server_socket);
     
-    // variables
-    int client_sock = 0;
-    struct sockaddr_in clientAddr;
-    socklen_t addrlen;
-    pthread_t tid;
+    string username = getData(server_socket);
+    username.pop_back();
     
-    while (1) {
-        // aceept
-        addrlen = sizeof(clientAddr);
-        client_sock = accept(listen_sock, (struct sockaddr *)&clientAddr, &addrlen);
-        if (client_sock == -1) {
-            err_display("accept()");
+    string response, reply;
+    reply = "Hello, " + username + "!";
+    cout << "Server: " << reply << endl;
+    sendData(server_socket, reply);
+    
+    while (true) {
+        response = getData(server_socket);
+        response.pop_back();
+        
+        if (response == "exit") {
+            cout << "bye!" << endl;
             break;
         }
-        char addr[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &clientAddr.sin_addr, addr, sizeof(addr));
-        printf("\n[TCP Server] Client IP: %s, Port: %hu\n", addr, ntohs(clientAddr.sin_port));
+        cout << username << ": " << response << endl;
+        cout << "Server" << ": ";
+        getline(cin, reply);
         
-        // create thread
-        retval = pthread_create(&tid, NULL, ProcessClient, (void *)(long long)client_sock);
-        if (retval != 0) { close(client_sock); }
+        if (reply == "exit")
+            break;
     }
-    
-    close(client_sock);
     return 0;
 }
