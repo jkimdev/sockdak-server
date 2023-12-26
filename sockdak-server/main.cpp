@@ -14,6 +14,18 @@ using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
+struct Session
+{
+    shared_ptr<ip::tcp::socket> sock;
+    ip::tcp::endpoint ep;
+    string id;
+    int room_no = -1;
+    
+    string sbuf;
+    string rbuf;
+    char buf[80];
+};
+
 class Server {
     io_service ios;
     shared_ptr<io_service::work> work;
@@ -35,11 +47,13 @@ public:
         this_thread::sleep_for(boost::asio::chrono::milliseconds(100));
         cout << "Threads Created" << endl;
         ios.post(bind(&Server::OpenGate, this));
+        
+        threadGroup.join();
     }
     
 private:
     char buf[80];
-
+    
     void WorkerThread() {
         lock.lock();
         cout << "[" << this_thread::get_id() << "]" << " Thread Start" << endl;
@@ -52,8 +66,7 @@ private:
         boost::system::error_code ec;
         gate.bind(ep, ec);
         
-        if (ec)
-        {
+        if (ec) {
             cout << "bind failed: " << ec.message() << endl;
             return;
         }
@@ -65,30 +78,31 @@ private:
     }
     
     void StartAccept() {
+        Session* session = new Session();
         shared_ptr<tcp::socket> sock(new tcp::socket(ios));
         
-        gate.async_accept(*sock, [this, sock](const boost::system::error_code& ec) {
-            if (ec) {
-                cout << "connect failed: " << ec.message() << endl;
-                return;
-            }
-//            lock.lock();
-//            cout << "[" << this_thread::get_id() << "]" << " Client Accepted" << endl;
-//            lock.unlock();
-            
-            ios.post([this, sock]() {
-                Receive(*sock);
-            });
-            
-            StartAccept();
-        });
+        session->sock = sock;
+        gate.async_accept(*sock, session->ep, bind(&Server::OnAccept, this, std::placeholders::_1, session));
     }
     
-    void Receive(tcp::socket& socket) {
+    void OnAccept(const boost::system::error_code &ec, Session* session) {
+        if (ec) {
+            cout << "connect failed: " << ec.message() << endl;
+            return;
+        }
+        
+        
+        ios.post(bind(&Server::Receive, this, session));
+        
+        StartAccept();
+        
+    }
+    
+    void Receive(Session* session) {
         boost::system::error_code ec;
         
         size_t size;
-        size = socket.read_some(boost::asio::buffer(buf, sizeof(buf)), ec);
+        size = session->sock->read_some(boost::asio::buffer(session->buf, sizeof(session->buf)), ec);
         
         
         if (ec) {
@@ -97,17 +111,18 @@ private:
         }
         
         lock.lock();
-        buf[size] = '\0';
+        session->buf[size] = '\0';
+        session->rbuf = session->buf;
         cout << buf << endl;
         lock.unlock();
         
-        SendData(socket, buf);
+        SendData(session, session->rbuf);
         
-        Receive(socket);
+        Receive(session);
     }
-        
-    void SendData(tcp::socket& socket, const string& message) {
-        socket.async_write_some(boost::asio::buffer(message, sizeof(message)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+    
+    void SendData(Session* session, const string& message) {
+        session->sock->async_write_some(boost::asio::buffer(message, sizeof(message)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
     }
     
     void OnSend(const boost::system::error_code& ec, std::size_t bytes_transferred){
