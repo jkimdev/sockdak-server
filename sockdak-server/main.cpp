@@ -33,6 +33,7 @@ class Server {
     tcp::acceptor gate;
     boost::asio::detail::thread_group threadGroup;
     boost::asio::detail::mutex lock;
+    vector<Session*> sessions;
     const int THREAD_SIZE = 4;
     
 public:
@@ -91,6 +92,9 @@ private:
             return;
         }
         
+        lock.lock();
+        sessions.push_back(session);
+        lock.unlock();
         
         ios.post(bind(&Server::Receive, this, session));
         
