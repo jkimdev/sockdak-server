@@ -126,7 +126,12 @@ private:
     }
     
     void SendData(Session* session, const string& message) {
-        session->sock->async_write_some(boost::asio::buffer(message, sizeof(message)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+        for (int i = 0; i < sessions.size(); i++) {
+            if (session->sock != sessions[i]->sock) {
+                sessions[i]->sbuf = message;
+                sessions[i]->sock->async_write_some(boost::asio::buffer(sessions[i]->sbuf, sizeof(sessions[i]->sbuf)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+            }
+        }
     }
     
     void OnSend(const boost::system::error_code& ec, std::size_t bytes_transferred){
