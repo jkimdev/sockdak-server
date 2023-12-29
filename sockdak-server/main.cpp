@@ -126,10 +126,15 @@ private:
     }
     
     void SendData(Session* session, const string& message) {
+    void SendData(Session* session) {
+        session->sock->async_write_some(boost::asio::buffer(session->sbuf, sizeof(session->sbuf)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+    }
+    
+    void SendToAll(Session* session, const string& message) {
         for (int i = 0; i < sessions.size(); i++) {
             if (session->sock != sessions[i]->sock) {
                 sessions[i]->sbuf = message;
-                sessions[i]->sock->async_write_some(boost::asio::buffer(sessions[i]->sbuf, sizeof(sessions[i]->sbuf)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+                SendData(sessions[i]);
             }
         }
     }
