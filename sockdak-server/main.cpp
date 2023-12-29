@@ -18,12 +18,13 @@ struct Session
 {
     shared_ptr<ip::tcp::socket> sock;
     ip::tcp::endpoint ep;
-    string id;
+    
+    string user_name = "UNKNOWN";
     int room_no = -1;
     
     string sbuf;
     string rbuf;
-    char buf[80];
+    char buf[512];
 };
 
 class Server {
@@ -35,6 +36,7 @@ class Server {
     boost::asio::detail::mutex lock;
     vector<Session*> sessions;
     const int THREAD_SIZE = 4;
+    enum ACTION { FRIENDS, INVALID };
     
 public:
     Server(string ip_address, unsigned short port_num) :
@@ -120,26 +122,50 @@ private:
         cout << buf << endl;
         lock.unlock();
         
-        SendData(session, session->rbuf);
+        DataManager(session);
         
         Receive(session);
     }
     
-    void SendData(Session* session, const string& message) {
-    void SendFriendList(Session* session) {
-        string friends;
+    ACTION ActionManager(string message) {
+        string action = message.substr(0, message.length());
+        if (action.compare("\friends")) {
+            return FRIENDS;
+        }
+        return INVALID;
+    }
+    
+    void DataManager(Session* session) {
+        if (session->buf[0] == '/') {
+            ACTION action = ActionManager(session->rbuf);
+
+            switch (action) {
+                case ACTION::FRIENDS:
+                    session->sbuf = GetFriendList(session);
+                    break;
+                case ACTION::INVALID:
+                    session->sbuf = "INVALID ACTION";
+                    break;
+            }
+            SendData(session);
+            return;
+        }
+        SendToAll(session, session->sbuf);
+    }
+    
+    string GetFriendList(Session* session) {
+        string result;
         if (sessions.size() < 2) {
-            session->sbuf = "No friends are connected";
+            result = "No friends are connected";
         }
         else {
             for(int i = 0; i < sessions.size(); i++) {
                 if (session->sock != sessions[i]->sock) {
-                    friends += sessions[i]->user_name + "\n";
+                    result += sessions[i]->user_name + "\n";
                 }
             }
-            session->sbuf = friends;
         }
-        SendData(session);
+        return result;
     }
     
     void SendData(Session* session) {
