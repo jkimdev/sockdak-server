@@ -126,6 +126,22 @@ private:
     }
     
     void SendData(Session* session, const string& message) {
+    void SendFriendList(Session* session) {
+        string friends;
+        if (sessions.size() < 2) {
+            session->sbuf = "No friends are connected";
+        }
+        else {
+            for(int i = 0; i < sessions.size(); i++) {
+                if (session->sock != sessions[i]->sock) {
+                    friends += sessions[i]->user_name + "\n";
+                }
+            }
+            session->sbuf = friends;
+        }
+        SendData(session);
+    }
+    
     void SendData(Session* session) {
         session->sock->async_write_some(boost::asio::buffer(session->sbuf, sizeof(session->sbuf)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
     }
