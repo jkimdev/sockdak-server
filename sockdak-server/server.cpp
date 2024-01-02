@@ -129,6 +129,7 @@ void Server::DataManager(Session* session) {
         return;
     }
     SendToAll(session, session->sbuf);
+    SendToAll(session, session->rbuf);
 }
 
 ACTION Server::ActionManager(string message) {
