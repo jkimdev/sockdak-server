@@ -11,20 +11,19 @@
 #include <boost/asio.hpp>
 #include <iostream>
 
-using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
 struct Session
 {
-    shared_ptr<ip::tcp::socket> sock;
+    std::shared_ptr<ip::tcp::socket> sock;
     ip::tcp::endpoint ep;
     
-    string user_name = "UNKNOWN";
+    std::string user_name = "UNKNOWN";
     int room_no = -1;
     
-    string sbuf;
-    string rbuf;
+    std::string sbuf;
+    std::string rbuf;
     char buf[512];
 };
 
@@ -32,16 +31,16 @@ enum ACTION { FRIENDS, INVALID };
 
 class Server {
     io_service ios;
-    shared_ptr<io_service::work> work;
+    std::shared_ptr<io_service::work> work;
     tcp::endpoint ep;
     tcp::acceptor gate;
     boost::asio::detail::thread_group threadGroup;
     boost::asio::detail::mutex lock;
-    vector<Session*> sessions;
+    std::vector<Session*> sessions;
     const int THREAD_SIZE = 4;
     
 public:
-    Server(string, unsigned short);
+    Server(std::string, unsigned short);
     
     void Start();
     
@@ -62,13 +61,13 @@ private:
     
     void Receive(Session* session);
     
-    void SendToAll(Session* session, const string& message);
+    void SendToAll(Session* session, const std::string& message);
     
     void DataManager(Session* session);
     
-    ACTION ActionManager(string message);
+    ACTION ActionManager(std::string message);
     
-    string GetFriendList(Session* session);
+    std::string GetFriendList(Session* session);
     
 };
 

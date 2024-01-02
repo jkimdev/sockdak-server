@@ -7,17 +7,17 @@
 
 #include "server.hpp"
 
-Server::Server(string ip_address, unsigned short port_num) :
+Server::Server(std::string ip_address, unsigned short port_num) :
 work(new io_service::work(ios)),
 ep(ip::address::from_string(ip_address), port_num),
 gate(ios, ep.protocol()) {}
 
 void Server::Start() {
     for (int i = 0; i < THREAD_SIZE; i++)
-        threadGroup.create_thread(bind(&Server::WorkerThread, this));
-    this_thread::sleep_for(boost::asio::chrono::milliseconds(100));
-    cout << "Threads Created" << endl;
-    ios.post(bind(&Server::OpenGate, this));
+        threadGroup.create_thread(std::bind(&Server::WorkerThread, this));
+    std::this_thread::sleep_for(boost::asio::chrono::milliseconds(100));
+    std::cout << "Threads Created" << std::endl;
+    ios.post(std::bind(&Server::OpenGate, this));
     
     threadGroup.join();
 }
@@ -25,7 +25,7 @@ void Server::Start() {
 
 void Server::WorkerThread() {
     lock.lock();
-    cout << "[" << this_thread::get_id() << "]" << " Thread Start" << endl;
+    std::cout << "[" << std::this_thread::get_id() << "]" << " Thread Start" << std::endl;
     lock.unlock();
     
     ios.run();
@@ -36,11 +36,11 @@ void Server::OpenGate() {
     gate.bind(ep, ec);
     
     if (ec) {
-        cout << "bind failed: " << ec.message() << endl;
+        std::cout << "bind failed: " << ec.message() << std::endl;
         return;
     }
     gate.listen();
-    cout << "Gate listening" << endl;
+    std::cout << "Gate listening" << std::endl;
     
     StartAccept();
     
@@ -48,15 +48,15 @@ void Server::OpenGate() {
 
 void Server::StartAccept() {
     Session* session = new Session();
-    shared_ptr<tcp::socket> sock(new tcp::socket(ios));
+    std::shared_ptr<tcp::socket> sock(new tcp::socket(ios));
     
     session->sock = sock;
-    gate.async_accept(*sock, session->ep, bind(&Server::OnAccept, this, std::placeholders::_1, session));
+    gate.async_accept(*sock, session->ep, std::bind(&Server::OnAccept, this, std::placeholders::_1, session));
 }
 
 void Server::OnAccept(const boost::system::error_code &ec, Session* session) {
     if (ec) {
-        cout << "connect failed: " << ec.message() << endl;
+        std::cout << "connect failed: " << ec.message() << std::endl;
         return;
     }
     
@@ -64,19 +64,19 @@ void Server::OnAccept(const boost::system::error_code &ec, Session* session) {
     sessions.push_back(session);
     lock.unlock();
     
-    ios.post(bind(&Server::Receive, this, session));
+    ios.post(std::bind(&Server::Receive, this, session));
     
     StartAccept();
     
 }
 
 void Server::SendData(Session* session) {
-    session->sock->async_write_some(boost::asio::buffer(session->sbuf, sizeof(session->sbuf)), bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
+    session->sock->async_write_some(boost::asio::buffer(session->sbuf, sizeof(session->sbuf)), std::bind(&Server::OnSend, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void Server::OnSend(const boost::system::error_code& ec, std::size_t bytes_transferred){
     if (ec) {
-        cout << "[" << this_thread::get_id() << "] async_write_some failed: " << ec.message() << bytes_transferred << endl;
+        std::cout << "[" << std::this_thread::get_id() << "] async_write_some failed: " << ec.message() << bytes_transferred << std::endl;
         return;
     }
 }
@@ -89,14 +89,14 @@ void Server::Receive(Session* session) {
     
     
     if (ec) {
-        cout << "[" << this_thread::get_id() << "] read failed: " << ec.message() << endl;
+        std::cout << "[" << std::this_thread::get_id() << "] read failed: " << ec.message() << std::endl;
         return;
     }
     
     lock.lock();
     session->buf[size] = '\0';
     session->rbuf = session->buf;
-    cout << buf << endl;
+    std::cout << buf << std::endl;
     lock.unlock();
     
     DataManager(session);
@@ -104,10 +104,10 @@ void Server::Receive(Session* session) {
     Receive(session);
 }
 
-void Server::SendToAll(Session* session, const string& message) {
+void Server::SendToAll(Session* session, const std::string& message) {
     for (int i = 0; i < sessions.size(); i++) {
         if (session->sock != sessions[i]->sock) {
-            sessions[i]->sbuf = message;
+            sessions[i]->sbuf = "[" + session->user_name + "] " + message;
             SendData(sessions[i]);
         }
     }
@@ -128,20 +128,19 @@ void Server::DataManager(Session* session) {
         SendData(session);
         return;
     }
-    SendToAll(session, session->sbuf);
     SendToAll(session, session->rbuf);
 }
 
-ACTION Server::ActionManager(string message) {
-    string action = message.substr(0, message.length());
+ACTION Server::ActionManager(std::string message) {
+    std::string action = message.substr(0, message.length());
     if (action.compare("\friends")) {
         return FRIENDS;
     }
     return INVALID;
 }
 
-string Server::GetFriendList(Session* session) {
-    string result;
+std::string Server::GetFriendList(Session* session) {
+    std::string result;
     if (sessions.size() < 2) {
         result = "No friends are connected";
     }

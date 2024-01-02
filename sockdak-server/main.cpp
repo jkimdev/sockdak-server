@@ -8,9 +8,10 @@
 #include "server.hpp"
 
 #define SERVER_PORT 9000
+#define SERVER_ADDR "127.0.0.1"
 
 int main(int argc, char* argv[]) {
-    Server server(address_v4::any().to_string(), SERVER_PORT);
+    Server server(SERVER_ADDR, SERVER_PORT);
     server.Start();
     return 0;
 }
