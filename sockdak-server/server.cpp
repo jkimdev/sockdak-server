@@ -59,10 +59,12 @@ void Server::OnAccept(const boost::system::error_code &ec, Session* session) {
         std::cout << "connect failed: " << ec.message() << std::endl;
         return;
     }
-    
+        
     lock.lock();
     sessions.push_back(session);
     lock.unlock();
+    
+    session->user_name = "user" + std::to_string(sessions.size());
     
     ios.post(std::bind(&Server::Receive, this, session));
     

@@ -10,6 +10,7 @@
 
 #include <boost/asio.hpp>
 #include <iostream>
+#include <thread>
 
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -20,7 +21,6 @@ struct Session
     ip::tcp::endpoint ep;
     
     std::string user_name = "UNKNOWN";
-    int room_no = -1;
     
     std::string sbuf;
     std::string rbuf;
