@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		BF2420422AEC9981005444B1 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF2420412AEC9981005444B1 /* main.cpp */; };
 		BF7351812B3EDC44004E59AC /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BF73517F2B3EDC44004E59AC /* server.cpp */; };
+		BFE0EB892B66523700949E81 /* database.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BFE0EB872B66523700949E81 /* database.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -29,6 +30,8 @@
 		BF73517F2B3EDC44004E59AC /* server.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = server.cpp; sourceTree = "<group>"; };
 		BF7351802B3EDC44004E59AC /* server.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = server.hpp; sourceTree = "<group>"; };
 		BFCC58C82AF4D2A80020DDE0 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
+		BFE0EB872B66523700949E81 /* database.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = database.cpp; sourceTree = "<group>"; };
+		BFE0EB882B66523700949E81 /* database.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = database.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +48,8 @@
 		BF2420352AEC9981005444B1 = {
 			isa = PBXGroup;
 			children = (
+				BFE0EB872B66523700949E81 /* database.cpp */,
+				BFE0EB882B66523700949E81 /* database.hpp */,
 				BF2420402AEC9981005444B1 /* sockdak-server */,
 				BF24203F2AEC9981005444B1 /* Products */,
 			);
@@ -128,6 +133,7 @@
 			files = (
 				BF7351812B3EDC44004E59AC /* server.cpp in Sources */,
 				BF2420422AEC9981005444B1 /* main.cpp in Sources */,
+				BFE0EB892B66523700949E81 /* database.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
