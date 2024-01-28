@@ -51,10 +51,10 @@ void Server::StartAccept() {
     std::shared_ptr<tcp::socket> sock(new tcp::socket(ios));
     
     session->sock = sock;
-    gate.async_accept(*sock, session->ep, std::bind(&Server::OnAccept, this, std::placeholders::_1, session));
+    gate.async_accept(*sock, session->ep, std::bind(&Server::OnAccept, this, session, std::placeholders::_1));
 }
 
-void Server::OnAccept(const boost::system::error_code &ec, Session* session) {
+void Server::OnAccept(Session* session, const boost::system::error_code &ec) {
     if (ec) {
         std::cout << "connect failed: " << ec.message() << std::endl;
         return;

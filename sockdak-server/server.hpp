@@ -8,7 +8,9 @@
 #ifndef server_hpp
 #define server_hpp
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/system/system_error.hpp>
+#include <boost/asio/io_service.hpp>
 #include <iostream>
 #include <thread>
 
@@ -53,7 +55,7 @@ private:
     
     void StartAccept();
     
-    void OnAccept(const boost::system::error_code &ec, Session* session);
+    void OnAccept(Session* session, const boost::system::error_code &ec);
     
     void SendData(Session* session);
     
